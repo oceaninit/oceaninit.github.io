@@ -5,7 +5,7 @@ date:   2017-06-11 18:28:02 +0700
 categories: python
 ---
 
-##链式赋值：
+## 链式赋值：
 
 ```python
 def assign1():
@@ -79,7 +79,7 @@ def assign2():
              47 RETURN_VALUE        
 >>> 
 ```
-##swap操作：
+## swap操作：
 
 ```python
 def assign3():

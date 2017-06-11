@@ -83,7 +83,7 @@ def assign2():
 
 ```python
 def assign3():
-    a = 3
+	a = 3
 	a, b = 1, a
 
 # >>> a, b

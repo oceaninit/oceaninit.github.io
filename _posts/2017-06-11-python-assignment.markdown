@@ -5,7 +5,7 @@ date:   2017-06-11 18:28:02 +0700
 categories: python
 ---
 
-python链式赋值的两个函数：
+##链式赋值：
 
 ```python
 def assign1():
@@ -79,7 +79,68 @@ def assign2():
              47 RETURN_VALUE        
 >>> 
 ```
+##swap操作：
 
-a = 3
-a, b = 1, a
-如果按照正常的思维逻辑，先进行a = 1，在进行b = a，最后b应该等于1，但是这里b应该等于3，因为在连续赋值语句中等式右边其实都是局部变量，而不是真正的变量值本身，比如，上面例子中右边的a，在python解析的时候，只是把变量a的指向的变量3赋给b，而不是a=1之后a的结果，这一点刚开始学python的人可能容易误解，再举一个Leetcode里链表的例子理解就更深了。
+```python
+def assign3():
+    a = 3
+	a, b = 1, a
+
+# >>> a, b
+# (1, 3)
+# >>> b is a
+# False
+# >>> id(b)
+# 30440824L
+# >>> id(a)
+# 30440872L
+```
+
+```
+>>> dis.dis(assign3)
+ 35           0 LOAD_CONST               1 (3)
+              3 STORE_FAST               0 (a)
+
+ 36           6 LOAD_CONST               2 (1)
+              9 LOAD_FAST                0 (a)
+             12 ROT_TWO             
+             13 STORE_FAST               0 (a)
+             16 STORE_FAST               1 (b)
+             19 LOAD_CONST               0 (None)
+             22 RETURN_VALUE 
+```    
+
+dis结果显示，swap操作并不是从左至右，先把a赋值1，再把a的值赋给b，而是同时读取赋值符右边的数，然后赋值。在连续赋值语句中等式右边其实都是局部变量，而不是真正的变量值本身
+
+```python
+def assign4():
+    a = 1
+    b = 2
+    a, b = b, a
+
+# >>> a, b
+# (2, 1)
+# >>> a is b
+# False
+# >>> id(a)
+# 31227280L
+# >>> id(b)
+# 31227304L
+```
+
+```
+>>> dis.dis(assign4)
+ 43           0 LOAD_CONST               1 (1)
+              3 STORE_FAST               0 (a)
+
+ 44           6 LOAD_CONST               2 (2)
+              9 STORE_FAST               1 (b)
+
+ 45          12 LOAD_FAST                1 (b)
+             15 LOAD_FAST                0 (a)
+             18 ROT_TWO             
+             19 STORE_FAST               0 (a)
+             22 STORE_FAST               1 (b)
+             25 LOAD_CONST               0 (None)
+             28 RETURN_VALUE 
+```

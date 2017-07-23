@@ -25,8 +25,7 @@ class UpperClass(object):
 
 ```
 
-```__metaclass__```并不需要是一个类，也可以是函数。
-
+metaclass并不需要是一个类，也可以是函数。
 
 ```python
 

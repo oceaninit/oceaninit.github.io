@@ -45,9 +45,9 @@ def __getattribute__(self, key):
 > To make a read-only data descriptor, define both ```__get__```() and ```__set__```() with the ```__set__```() raising an AttributeError when called. Defining the ```__set__```() method with an exception raising placeholder is enough to make it a data descriptor.
 
 
-* ```__getattr__ ```. ```__getattribute__```找不到时, 会调用```__getattr__```。未定义，抛出AttributeError异常。
+* `__getattr__`, `__getattribute__`找不到时, 会调用`__getattr__`。未定义，抛出AttributeError异常。
 
-* ```__get__```. 定义描述符Descriptor。
+* `__get__` 定义描述符Descriptor。
 
 例如，obj = Cls(), 那么obj.attr查找顺序如下：
 
@@ -62,4 +62,63 @@ def __getattribute__(self, key):
  4. 如果Cls有```__getattr__```方法，调用```__getattr__```方法，否则
  5. 抛出AttributeError异常
 
- > 先检查对象(类和基类)的数据描述符(data descriptor)，再检查实例字典```__dict__```，再检查类和基类的非数据描述符(non-data descriptor)，最后是类和基类的字典。
+ > 先检查对象(类和基类)的数据描述符(data descriptor)，再检查实例字典```__dict__```，再检查类和基类的非数据描述符(non-data descriptor)，最后是类和基类的字典。**归结起来就是和`___dict___`以及数据描述符打交道。**如果指定了`__slots__`的话不会创建`__dict__`哦。
+
+ ***如果重定义了`__getattribute__`, 还是上面这样吗？？？ ***
+
+
+## 属性赋值时的查找策略
+
+对于obj.attr = value, 基本同上
+
+1. 在`obj.__class__.__dict__`中查找attr，如果存在并且是data descriptor，调用attr的`__set__`方法，否则
+2. 继续到`obj.__class__`的父类和基类中查找，找到 data descriptor则调用其`__set__`方法，否则
+3. 直接在`obj.__dict__`中加入`obj.__dict__['attr'] = value`
+
+## 继承属性查找顺序(MRO)
+
+MRO的全称是Method Resolution Order，即方法解析顺序，用来定义类继承链中如何对类属性和方法进行查找，保证属性查找不会  
+出现冲突。现在实际采用的是C3算法.可以通过类的`__mro__`属性和`mro`方法获得类的属性查找顺序。
+
+```python
+def super(cls, inst):
+    mro = inst.__class__.mro()
+    return mro[mro.index(cls)+1]
+```
+
+## Properties
+
+`property(fget=None, fset=None, fdel=None, doc=None) -> property attribute`
+
+`__get__`定义的描述符和property的区别是什么？
+propery 定义了`__get__`和`__set__`, 属于data descriptor, 详见[Descriptor HowTo Guide](https://docs.python.org/2/howto/descriptor.html?highlight=__getattribute__)。
+
+> Calling property() is a succinct way of building a data descriptor that triggers function calls upon access to an attribute.
+
+## Functions and Methods
+
+> To support method calls, functions include the `__get__`() method for binding methods during attribute access. This means that all functions are non-data descriptors which return bound or unbound methods depending whether they are invoked from an object or a class. In pure python, it works like this:
+
+```python
+class Function(object):
+
+    def __get__(self, obj, objtype=None):
+        "Simulate func_descr_get() in Objects/funcobject.c"
+        return types.MethodType(self, obj, objtype)
+
+
+>>> class D(object):
+...     def f(self, x):
+...         return x
+...
+>>> d = D()
+>>> D.__dict__['f']  # Stored internally as a function
+<function f at 0x00C45070>
+>>> D.f              # Get from a class becomes an unbound method
+<unbound method D.f>
+>>> d.f              # Get from an instance becomes a bound method
+<bound method D.f of <__main__.D object at 0x00B18C90>>
+```
+
+
+

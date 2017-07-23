@@ -64,8 +64,16 @@ def __getattribute__(self, key):
 
  > 先检查对象(类和基类)的数据描述符(data descriptor)，再检查实例字典```__dict__```，再检查类和基类的非数据描述符(non-data descriptor)，最后是类和基类的字典。**归结起来就是和`___dict___`以及数据描述符打交道。**如果指定了`__slots__`的话不会创建`__dict__`哦。
 
- ***如果重定义了`__getattribute__`, 还是上面这样吗？？？ ***
+ ***如果重定义了`__getattribute__`, 还是上面这样吗？？？ ***, 下例，所有的属性都可调用，但结果都为None。
+```python
 
+class A(object):
+	a = 2
+	def __getattribute__(self, key):
+		pass
+o = A()
+print o.a, o.ooxx
+```
 
 ## 属性赋值时的查找策略
 

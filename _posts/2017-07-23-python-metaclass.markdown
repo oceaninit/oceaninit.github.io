@@ -1,6 +1,7 @@
 ## 创建一个类
 
 * type 
+
 ```python
 Person = type('Person', (object,), {'name':'baby', 'age':20})
 print type(Person())

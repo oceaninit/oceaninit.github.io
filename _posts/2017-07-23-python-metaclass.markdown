@@ -1,4 +1,4 @@
-## 创建一个类
+## 类
 
 * type 
 
@@ -45,3 +45,5 @@ __metaclass__ = upper_func  #作用到模块中的所有类
 class classA(list): 
 	pass
 ```
+
+除了使用元类外，还可以使用class decorators。

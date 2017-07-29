@@ -62,7 +62,10 @@ def __getattribute__(self, key):
  4. 如果Cls有```__getattr__```方法，调用```__getattr__```方法，否则
  5. 抛出AttributeError异常
 
- > 先检查对象(类和基类)的数据描述符(data descriptor)，再检查实例字典```__dict__```，再检查类和基类的非数据描述符(non-data descriptor)，最后是类和基类的字典。**归结起来就是和`___dict___`以及数据描述符打交道。**如果指定了`__slots__`的话不会创建`__dict__`哦。
+ > 先检查对象(类和基类)的数据描述符(data descriptor)，再检查实例字典```__dict__```，再检查类和基类的非数据描述符(non-data descriptor)，最后是类和基类的字典。**归结起来就是和`___dict___`以及数据描述符打交道。**如果指定了`__slots__`的话不会创建`__dict__`。概括起来：***类属性 > 数据描述符 > 实例属性 > 非数据描述符 -> `__getter__`() ***。
+
+ > 在类实例中查找属性的时候，首先在实例自己的作用域中查找，如果没有找到，则再在类定义的作用域中查找。在对类实例属性进行赋值的时候，实际上会在类实例定义的作用域中添加一个属性（如果还不存在的话），并不会影响到相应类中定义的同名属性。
+
 
  ***如果重定义了`__getattribute__`, 还是上面这样吗？？？ ***, 下例，所有的属性都可调用，但结果都为None。
 ```python
@@ -82,6 +85,75 @@ print o.a, o.ooxx
 1. 在`obj.__class__.__dict__`中查找attr，如果存在并且是data descriptor，调用attr的`__set__`方法，否则
 2. 继续到`obj.__class__`的父类和基类中查找，找到 data descriptor则调用其`__set__`方法，否则
 3. 直接在`obj.__dict__`中加入`obj.__dict__['attr'] = value`
+
+举个例子，对于data描述符，其优先级高于实例属性，赋值操作被`__set__`截获，实例的`__dict__`仍然是空的。
+
+```python
+class Descriptor(object):
+
+	def __init__(self, value = None):
+		self.value = value
+
+	def __get__(self, instance, owner):
+		return self.value
+
+	def __set__(self, instance, value):
+		self.value = value
+
+class A(object):
+	d = Descriptor()
+
+>>> a = A()
+>>> a.__dict__
+{}
+>>> a.__class__.__dict__
+dict_proxy({'__dict__': <attribute '__dict__' of 'A' objects>, '__module__': '__main__', '__weakref__': <attribute '__weakref__' of 'A' objects>, 'd': <__main__.Descriptor object at 0x0000000003016898>, '__doc__': None})
+>>> a.d
+Descriptor.__get__ <__main__.A object at 0x00000000030167B8> <class '__main__.A'>
+>>> a.d = 3
+>>> a.d
+3
+>>> a.__dict__
+{}
+>>> a.__class__.__dict__
+dict_proxy({'__dict__': <attribute '__dict__' of 'A' objects>, '__module__': '__main__', '__weakref__': <attribute '__weakref__' of 'A' objects>, 'd': <__main__.Descriptor object at 0x0000000003016898>, '__doc__': None})
+>>> 
+
+```
+对于non-data描述符，
+```python
+class NonDescriptor(object):
+
+	def __init__(self, value = None):
+		self.value = value
+
+	def __get__(self, instance, owner):
+		print 'Descriptor.__get__', instance, owner
+
+
+class B(object):
+	d = NonDescriptor()
+
+>>> b = B()
+>>> b.__dict__
+{}
+>>> b.__class__.__dict__
+dict_proxy({'__dict__': <attribute '__dict__' of 'B' objects>, '__module__': '__main__', '__weakref__': <attribute '__weakref__' of 'B' objects>, 'd': <__main__.NonDescriptor object at 0x00000000030168D0>, '__doc__': None})
+>>> b.d = 3
+>>> b.d
+3
+>>> b.__dict__
+{'d': 3}
+```
+特殊的，直接通过类调用描述符，不会进入`__set__`，`B.__dict__`中的属性直接更新，也即意味着类属性的优先级高于描述符。
+```python
+>>> B.d = 2
+>>> B.__dict__
+dict_proxy({'__dict__': <attribute '__dict__' of 'B' objects>, '__module__': '__main__', '__weakref__': <attribute '__weakref__' of 'B' objects>, 'd': 2, '__doc__': None})
+>>> B.d
+2
+```
+
 
 ## 继承属性查找顺序(MRO)
 
@@ -127,6 +199,10 @@ class Function(object):
 >>> d.f              # Get from an instance becomes a bound method
 <bound method D.f of <__main__.D object at 0x00B18C90>>
 ```
+
+
+<!-- 更多可以参考这个 https://segmentfault.com/a/1190000008994270 -->
+
 
 
 

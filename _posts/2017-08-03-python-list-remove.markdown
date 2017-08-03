@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Python assignment"
+title:  "Python list remove"
 date:   2017-08-03 22:49:02 +0700
 categories: python
 ---

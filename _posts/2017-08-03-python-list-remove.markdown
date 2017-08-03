@@ -47,7 +47,7 @@ for i in range(len(a)):
 # IndexError: list index out of range
 ```
 
-for 和 enumerate本质是使用了迭代器，`__iter__`可以拿到一个迭代器，可以手动调用next，
+for 和 enumerate本质是使用了迭代器，`__iter__`可以拿到一个迭代器对象，可以手动调用next，for循环就是通过不断的调用该对象的next实现，
 
 ```
 >>> a= [1, 2, 3, 4, 5]

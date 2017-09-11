@@ -54,12 +54,12 @@ def __getattribute__(self, key):
 2. 如果attr出现在```obj.__dict__```中， 那么直接返回 ```obj.__dict__['attr']```，否则
 3. 如果attr出现在Cls或其基类的```__dict__```中
 
-    3.1 如果attr是non-data descriptor，那么调用其```__get__```方法, 否则
+	3.1 如果attr是non-data descriptor，那么调用其```__get__```方法, 否则
+	
+	3.2 返回 ```__dict__['attr']```
 
-  	3.2 返回 ```__dict__['attr']```
-
- 4. 如果Cls有```__getattr__```方法，调用```__getattr__```方法，否则
- 5. 抛出AttributeError异常
+4. 如果Cls有```__getattr__```方法，调用```__getattr__```方法，否则
+5. 抛出AttributeError异常
 
  > 先检查对象(类和基类)的数据描述符(data descriptor)，再检查实例字典```__dict__```，再检查类和基类的非数据描述符(non-data descriptor)，最后是类和基类的字典。**归结起来就是和`___dict___`以及数据描述符打交道。**如果指定了`__slots__`的话不会创建`__dict__`。概括起来：***类属性 > 数据描述符 > 实例属性 > 非数据描述符 -> `__getter__`() ***。
 

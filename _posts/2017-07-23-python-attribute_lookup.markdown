@@ -5,7 +5,6 @@ date:   2017-07-23
 categories: python
 ---
 
-# python 属性查找
 
 ## 作用域
 

@@ -46,7 +46,7 @@ def __getattribute__(self, key):
 
 * `__getattr__`, `__getattribute__`找不到时, 会调用`__getattr__`。未定义，抛出AttributeError异常。
 
-* `__get__` 定义描述符Descriptor。
+* `__get__` 定义描述符Descriptor。*** 描述符是类属性！！！ ***
 
 例如，obj = Cls(), 那么obj.attr查找顺序如下：
 
@@ -55,15 +55,20 @@ def __getattribute__(self, key):
 3. 如果attr出现在Cls或其基类的```__dict__```中
 
 	3.1 如果attr是non-data descriptor，那么调用其```__get__```方法, 否则
-	
+
 	3.2 返回 ```__dict__['attr']```
 
 4. 如果Cls有```__getattr__```方法，调用```__getattr__```方法，否则
 5. 抛出AttributeError异常
 
- > 先检查对象(类和基类)的数据描述符(data descriptor)，再检查实例字典```__dict__```，再检查类和基类的非数据描述符(non-data descriptor)，最后是类和基类的字典。**归结起来就是和`___dict___`以及数据描述符打交道。**如果指定了`__slots__`的话不会创建`__dict__`。概括起来：***类属性 > 数据描述符 > 实例属性 > 非数据描述符 -> `__getter__`() ***。
+Cls.attr见下部分，属性直接更新。
 
- > 在类实例中查找属性的时候，首先在实例自己的作用域中查找，如果没有找到，则再在类定义的作用域中查找。在对类实例属性进行赋值的时候，实际上会在类实例定义的作用域中添加一个属性（如果还不存在的话），并不会影响到相应类中定义的同名属性。
+ > 先检查对象(类和基类)的数据描述符(data descriptor)，再检查实例字典```__dict__```，再检查类和基类的非数据描述符(non-data descriptor)，最后是类和基类的字典。**归结起来就是和`___dict___`以及数据描述符打交道。**如果指定了`__slots__`的话不会创建`__dict__`。
+
+ > 当使用对象访问属性时，都会调用__getattribute__内建函数，__getattribute__查找属性的优先级如下：
+ *** 类属性(`___dict___`属性) > 数据描述符 > 实例属性 > 非数据描述符 -> `__getattr__`() ***。
+
+ > 在对类实例属性进行赋值的时候，实际上会在类实例定义的作用域中添加一个属性（如果还不存在的话），并不会影响到相应类中定义的同名属性。
 
 
  ***如果重定义了`__getattribute__`, 还是上面这样吗？？？ ***, 下例，所有的属性都可调用，但结果都为None。
@@ -118,6 +123,12 @@ Descriptor.__get__ <__main__.A object at 0x00000000030167B8> <class '__main__.A'
 dict_proxy({'__dict__': <attribute '__dict__' of 'A' objects>, '__module__': '__main__', '__weakref__': <attribute '__weakref__' of 'A' objects>, 'd': <__main__.Descriptor object at 0x0000000003016898>, '__doc__': None})
 >>> 
 
+>>> id(a1.d)
+Descriptor.__get__ <__main__.A object at 0x0000000002E8B7B8> <class '__main__.A'>
+506046248L
+>>> id(a2.d)
+Descriptor.__get__ <__main__.A object at 0x0000000002E8B860> <class '__main__.A'>
+506046248L
 ```
 对于non-data描述符，
 ```python
@@ -144,13 +155,13 @@ dict_proxy({'__dict__': <attribute '__dict__' of 'B' objects>, '__module__': '__
 >>> b.__dict__
 {'d': 3}
 ```
-特殊的，直接通过类调用描述符，不会进入`__set__`，`B.__dict__`中的属性直接更新，也即意味着类属性的优先级高于描述符。
+特殊的，直接通过类调用描述符，不会进入`__get__``__set__`，`B.__dict__`中的属性直接更新，也即意味着类属性的优先级高于描述符。
 ```python
 >>> B.d = 2
 >>> B.__dict__
 dict_proxy({'__dict__': <attribute '__dict__' of 'B' objects>, '__module__': '__main__', '__weakref__': <attribute '__weakref__' of 'B' objects>, 'd': 2, '__doc__': None})
 >>> B.d
-2
+2     
 ```
 
 

@@ -92,4 +92,9 @@ TypeError: cannot create weak reference to 'B' object
 >>> weakref.getweakrefs(c)
 [<weakref at 0000000002ED1E58; to 'C' at 0000000002EDAEB8>]
 
+>>> import sys
+>>> sys.getrefcount(c)
+2
+
+当使用某个引用作为参数，传递给getrefcount()时，参数实际上创建了一个临时的引用。因此，getrefcount()所得到的结果，会比期望的多1。
 ```

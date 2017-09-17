@@ -5,8 +5,6 @@ date:   2017-09-12
 categories: python
 ---
 
-## Python `__slots__`
-
 
 ```python
 class A(object):
@@ -30,6 +28,7 @@ class A(object):
 * `__slots__`仅对当前类起作用，对子类不起作用，除非在子类中也定义`__slots__`，子类允许定义的属性就是自身的`__slots__`加上父类的`__slots__`。
 * 实例在未给`__slots__`中的变量赋值前，不能使用变量。
 * 如果`__slots__`中的变量为类变量，该变量对于实例来说是只读的。如果想修改的话，可以通过类来修改。
+
 ```python
 class B(object):
     __slots__ = ('v')
@@ -46,8 +45,8 @@ Traceback (most recent call last):
     b.v = 2
 AttributeError: 'B' object attribute 'v' is read-only    
 ```
-* <http://tool.oschina.net/uploads/apidocs/python2.7.3/reference/datamodel.html>
 
+* <http://tool.oschina.net/uploads/apidocs/python2.7.3/reference/datamodel.html>
 * 如果需要给实例动态增加属性，将 `__dict__`添加到 `__slots__`。
 * 定义`__slots__`的实例不支持弱引用，如需支持，需要将`__weakref__`添加到 `__slots__`。
 

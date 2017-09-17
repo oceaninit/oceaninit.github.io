@@ -100,7 +100,7 @@ getrefcount()所得到的结果，会比期望的多1。
 
 ```
 
-[`__slots__`中的属性并不存在于`__dict__`中，而是在 object heap中，创建实例的时候，预留空间][1]。
+`__slots__`中的属性并不存在于`__dict__`中，而是在 object heap中，创建实例的时候，[预留空间][1]。
 
 > What you cannot do is redefine `__setattr__` to use `self.__dict__`, because instances of a class with slots do not have a `__dict__`attribute. But such instances do have a self.x attribute, it's contents are just not stored in a dictionary on the instance.
 

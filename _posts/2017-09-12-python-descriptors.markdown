@@ -98,7 +98,7 @@ class D(object):
 
 * 如果同时定义了 `__slots__`和descriptor?
 
-      定义了`__slots__`的实例是没有`__dict__`的，看看[Yahya Abou 'Imran][2]的思路
+  定义了`__slots__`的实例是没有`__dict__`的，看看[Yahya Abou 'Imran][2]的思路
 
 >So, here is an a generic solution that tries to acces to the `__dict__` variable first (which is the default anyway) and, if it fails, use getattr and setattr:
 
@@ -163,10 +163,9 @@ class E2(object):
     self.a = val 
 ```
 
-同[Glenn Maynard][3]的答案
+同[Glenn Maynard][2]的答案
 
 
 
 [1]: <http://blog.csdn.net/lis_12/article/details/53453665>
 [2]: <https://stackoverflow.com/questions/4912499/using-python-descriptors-with-slots>
-[3]: <https://stackoverflow.com/questions/4912499/using-python-descriptors-with-slots>

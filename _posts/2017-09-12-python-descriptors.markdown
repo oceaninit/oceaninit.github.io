@@ -5,8 +5,6 @@ date:   2017-09-12
 categories: python
 ---
 
-## Python descriptors
-
 * 描述符就是一个绑定方法`__get__`(), `__set__`(), `__delete__`()的对象。
 ```
 descriptor.__get__(self, obj, type=None) --> value
@@ -27,7 +25,7 @@ class Foo(object):
 
 * 描述符是所有实例共享的, 如果实例修改了，可能会影响其它实例，这就涉及到描述符的实现：
 
-  * 标签法。
+    * 标签法。
 
     给实例增加一个与描述符同名的实例属性，利用该实例属性来保存该实例描述符的值，
     描述符相当于一个中间操作，描述符的`__get__`()返回实例属性，`__set__`也是对实例属性操作。原理: 数据描述符的访问优先级比实例属性高.
@@ -69,6 +67,7 @@ Traceback (most recent call last):
   RuntimeError: maximum recursion depth exceeded while calling a Python object
 
 ```
+
 ---
 
 ```python
@@ -100,7 +99,8 @@ class D(object):
 * 如果同时定义了 `__slots__`和descriptor?
 
       定义了`__slots__`的实例是没有`__dict__`的，看看[Yahya Abou 'Imran][2]的思路
-      >So, here is an a generic solution that tries to acces to the `__dict__` variable first (which is the default anyway) and, if it fails, use getattr and setattr:
+
+>So, here is an a generic solution that tries to acces to the `__dict__` variable first (which is the default anyway) and, if it fails, use getattr and setattr:
 
 ```python
 class WorksWithDictAndSlotsDescriptor(object):

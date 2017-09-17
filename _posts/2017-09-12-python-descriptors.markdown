@@ -27,65 +27,146 @@ class Foo(object):
 
 * 描述符是所有实例共享的, 如果实例修改了，可能会影响其它实例，这就涉及到描述符的实现：
 
-    * [数据字典法][1]
-    在descriptor中使用数据字典，由`__get__`和`__set__`的第一个参数来确定是哪个实例，使用实例作为字典的key，为每一个实例单独保存一份数据，缺陷就是不可哈希对象不能作为键值。
-
-```python
-
-      from weakref import WeakKeyDictionary
-      class descriptor(object):
-          def __init__(self, default):
-              self.default = default
-              self.data = WeakKeyDictionary()
-
-          def __get__(self, instance, owner):# instance = x,owner = type(x)
-              # we get here when someone calls x.d, and d is a descriptor instance
-              return self.data.get(instance, self.default)
-
-          def __set__(self, instance, value):
-              # we get here when someone calls x.d = val, and d is a descriptor instance
-              self.data[instance] = value
-
-      class Foo(object):
-          bar = descriptor(5)
-```
-
-
   * 标签法。
 
     给实例增加一个与描述符同名的实例属性，利用该实例属性来保存该实例描述符的值，
     描述符相当于一个中间操作，描述符的`__get__`()返回实例属性，`__set__`也是对实例属性操作。原理: 数据描述符的访问优先级比实例属性高.
 
 ```python
-    class descriptor(object):
-        def __init__(self, label):#label为给实例增加的实例属性名
-            self.label = label
-        def __get__(self, instance, owner):
-            #dict.get(k[,d]) -> D[k] if k in D, else d.  d defaults to None.
-            return instance.__dict__.get(self.label)  #获取与描述符同名的实例属性的值 
+# 这是一个错误的实现！！！
 
-        def __set__(self, instance, value):
-            #注意这里,要这么写,不能写instance.x = val这种形式,这样会形成自身的循环调用
-            instance.__dict__[self.label] = value     #修改与描述符同名的实例属性的值  
+class Descriptor1(object):
+  def __init__(self, label):
+    self.label = label
 
-    class Foo(list):
-        x = descriptor('x') #注意这个初始化值为要给实例增加的实例属性名，要和描述符对象同名。
-        y = descriptor('y')
+  def __get__(self, instance, owner):
+    return getattr(instance, self.label)
 
-        def __init__(self): 
-        '''
-          因为只有调用了__set__函数才会建立一个与描述符同名的实例属性，所以可以在__init__()函数中对描述符赋值。
-          无此函数访问x也没trace，打印为空。
-        '''
-          self.x = 1  
-          self.y = 2
+  def __set__(self, instance, value):
+    setattr(instance, self.label, value)
+
+class C(object):
+  a = Descriptor1('a')
+
+  def __init__(self, val):
+    self.a = val
+
+>>> c = C(1)
+
+Traceback (most recent call last):
+  File "<pyshell#9>", line 1, in <module>
+    c = C(1)
+  File "G:\Python\CodeSlice\python\descriptor.py", line 47, in __init__
+    self.a = val
+  File "G:\Python\CodeSlice\python\descriptor.py", line 41, in __set__
+    setattr(instance, self.label, value)
+  .
+  .
+  .
+
+  File "G:\Python\CodeSlice\python\descriptor.py", line 41, in __set__
+    setattr(instance, self.label, value)
+  RuntimeError: maximum recursion depth exceeded while calling a Python object
+
+```
+---
+
+```python
+# 正确的实现
+
+class Descriptor2(object):
+  def __init__(self, label):#label为给实例增加的实例属性名
+    self.label = label
+
+  def __get__(self, instance, owner):
+    return instance.__dict__.get(self.label)  #获取与描述符同名的实例属性的值 
+
+  def __set__(self, instance, value):
+    #不能写instance.x = val这种形式, 对自身的循环调用！！！
+    instance.__dict__[self.label] = value     #修改与描述符同名的实例属性的值  
+
+class D(object):
+  a = Descriptor2('a') #注意这个初始化值为要给实例增加的实例属性名，要和描述符对象同名。
+
+  def __init__(self, val): 
+    '''
+    只有调用了__set__函数才会建立一个与描述符同名的实例属性，所以可以在__init__()函数中对描述符赋值。
+    无此函数访问x也没trace，打印为空。
+    '''
+    self.a = val  
 ```
 
 
+* 如果同时定义了 `__slots__`和descriptor?
+
+      定义了`__slots__`的实例是没有`__dict__`的，看看[Yahya Abou 'Imran][2]的思路
+      >So, here is an a generic solution that tries to acces to the `__dict__` variable first (which is the default anyway) and, if it fails, use getattr and setattr:
+
+```python
+class WorksWithDictAndSlotsDescriptor(object):
+# class WorksWithDictAndSlotsDescriptor: 
+# 旧式类，不可用, e.a = <__main__.WorksWithDictAndSlotsDescriptor instance at 0x0000000002E25408>
+
+  def __init__(self, attr_name):
+    self.attr_name = attr_name
+
+  def __get__(self, instance, owner):
+    try:
+      return instance.__dict__[self.attr_name]
+    except AttributeError:
+      return getattr(instance, self.attr_name)
+
+  def __set__(self, instance, value):
+    try:
+      instance.__dict__[self.attr_name] = value
+    except AttributeError:
+      setattr(instance, self.attr_name, value)
 ```
 
+>Works only if the attr_name is not the same as the real instance variable's name, or you will have a RecursionError as pointed to in the accepted answer
 
+```python
+
+class E(object):
+  __slots__ = ('a',)
+  a = WorksWithDictAndSlotsDescriptor('a')
+
+  def __init__(self, val): 
+    self.a = val 
+
+>>> e = E(1)
+
+Traceback (most recent call last):
+  File "<pyshell#0>", line 1, in <module>
+    e = E(1)
+  File "G:\Python\CodeSlice\python\descriptor.py", line 97, in __init__
+    self.a = val
+  File "G:\Python\CodeSlice\python\descriptor.py", line 88, in __set__
+    setattr(instance, self.attr_name, value)
+  File "G:\Python\CodeSlice\python\descriptor.py", line 88, in __set__
+
+  .
+  setattr(instance, self.attr_name, value)
+  RuntimeError: maximum recursion depth exceeded while calling a Python object recursion depth exceeded 
+  while calling a Python object
 ```
+
+一种正确的用法：
+
+```python
+
+class E2(object):
+  __slots__ = ('_a',)
+  a = WorksWithDictAndSlotsDescriptor('_a')
+
+  def __init__(self, val): 
+    self.a = val 
+```
+
+同[Glenn Maynard][3]的答案
+
 
 
 [1]: <http://blog.csdn.net/lis_12/article/details/53453665>
+[2]: <https://stackoverflow.com/questions/4912499/using-python-descriptors-with-slots>
+[3]: <https://stackoverflow.com/questions/4912499/using-python-descriptors-with-slots>

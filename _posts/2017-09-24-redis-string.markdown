@@ -1,11 +1,10 @@
 ---
 layout: post
-title:  "Redis String"
+title:  "Redis 字符串"
 date:   2017-09-24
 categories: redis
 ---
 
-## Redis字符串 
 
 Redis字符串是二进制安全的，二进制安全是指字符串中不能有'\0'，因为C语言函数库默认字符串是以’\0’结尾的，sdshdr体成员len决定了字符串长度而不是c语音的‘\0’。实际sds应该是指向buf的。
 

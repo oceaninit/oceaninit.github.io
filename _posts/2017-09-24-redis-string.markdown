@@ -32,6 +32,26 @@ static inline size_t sdsavail(const sds s) {
 }
 ```
 
+`struct sdshdr *sh = (void*)(s-(sizeof(struct sdshdr)));` 将字符串地址换算成结构体地址，先看下面一段代码
+
+```
+typedef struct sdshdr{  
+    int len;  
+    char buf[1];  
+}sdshdr;  
+
+typedef struct sdshdr1{  
+    int len;  
+    char buf[];  
+}sdshdr1;  
+
+sizeof(char*) = 4     指针
+sizeof(sdshdr*) = 4   指针
+sizeof(sdshdr) = 8    int + 数组，内存对齐  
+sizeof(sdshdr1) = 4   int， char [] 占位作用，不占内存
+```
+
+
 字符串拼接：动态扩容
 
 1、拼接后的字符串长度小于1M(SDS_MAX_PREALLOC)，长度扩容为2倍，否则；

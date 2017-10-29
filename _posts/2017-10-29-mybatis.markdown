@@ -166,5 +166,6 @@ public class Test1 {
 }      
 ```
 
-工程结构：
+<!-- 工程结构：
 ![](https://github.com/oceaninit/oceaninit.github.io/blob/master/pic/mybatis.png)
+ -->
